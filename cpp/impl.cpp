@@ -15,10 +15,10 @@ namespace
 
     std::optional<size_t> memchrVec(const std::vector<char> &haystack, char needle, size_t offset)
     {
-        if (offset >= haystack.size())
-        {
-            return std::nullopt;
-        }
+        // if (offset >= haystack.size())
+        // {
+        //     return std::nullopt;
+        // }
         auto *start = haystack.data() + offset;
         auto *r = memchr(start, needle, haystack.size() - offset);
         if (r == nullptr)
@@ -35,11 +35,11 @@ namespace
         {
             auto byte = data[i];
             std::uint8_t priority = 0;
-            if (byte >= 'a' && byte <= 'z')
+            if (byte >= 'a')
             {
                 priority = byte - 'a' + 1;
             }
-            else if (byte >= 'A' && byte <= 'Z')
+            else
             {
                 priority = byte - 'A' + 27;
             }
@@ -66,11 +66,6 @@ namespace ad3p2
         size_t offset = 0;
         while (const auto newLinePos = memchrVec(buf, '\n', offset))
         {
-            if (newLinePos == 0)
-            {
-                break;
-            }
-
             result += processLine(buf.data() + offset, *newLinePos);
             offset += *newLinePos + 1;
         }

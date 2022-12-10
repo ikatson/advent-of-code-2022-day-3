@@ -7,8 +7,8 @@
 int main()
 {
     auto result = ad3p2::readFile("../input.txt");
-    auto warmupCount = 1000;
-    auto count = 3000;
+    auto warmupCount = 100000;
+    auto count = 300000;
 
     for (auto i = 0; i < warmupCount; i++)
     {
