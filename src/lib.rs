@@ -110,9 +110,10 @@ pub mod s3 {
     fn compartment(c: &[u8]) -> u64 {
         let mut result = 0u64;
         for byte in c.iter().copied() {
-            let bit = match byte {
-                b'a'..=b'z' => byte - b'a' + 1,
-                _ => byte - b'A' + 27,
+            let bit = if byte >= b'a' {
+                byte - b'a' + 1
+            } else {
+                byte - b'A' + 27
             };
             result |= 1 << bit;
         }
@@ -137,11 +138,6 @@ pub mod s3 {
         for pos in memchr::memchr_iter(b'\n', b) {
             let line = unsafe { b.get_unchecked(prev..pos) };
             let lresult = process_line(line);
-            println!(
-                "{} = {}",
-                unsafe { std::str::from_utf8_unchecked(line) },
-                lresult
-            );
             result += lresult;
             prev = pos + 1
         }
