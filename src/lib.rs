@@ -84,7 +84,7 @@ pub mod lsplit {
 }
 
 pub mod part1 {
-    pub fn line<'a>(l: &'a [u8], compartment: impl Fn(&'a [u8]) -> u64) -> u32 {
+    pub fn line(l: &[u8], compartment: impl Fn(&[u8]) -> u64) -> u32 {
         if l.is_empty() {
             return 0;
         }
@@ -99,13 +99,12 @@ pub mod part1 {
         intersection.trailing_zeros()
     }
 
-    pub fn process_buf_generic<'a, SPL, SPLRES, COMP>(b: &'a [u8], lspl: SPL, comp: COMP) -> u32
+    pub fn process_buf_generic<'a, LINES, COMP>(lines: LINES, comp: COMP) -> u32
     where
-        COMP: Fn(&'a [u8]) -> u64 + Copy,
-        SPL: Fn(&'a [u8]) -> SPLRES,
-        SPLRES: Iterator<Item = &'a [u8]>,
+        COMP: Fn(&[u8]) -> u64 + Copy,
+        LINES: Iterator<Item = &'a [u8]>,
     {
-        lspl(b).map(|b| line(b, comp)).sum()
+        lines.map(|b| line(b, comp)).sum()
     }
 
     #[cfg(test)]
@@ -156,19 +155,16 @@ pub mod part1 {
 }
 
 pub mod part2 {
-    pub fn process_buf_generic<'a, SPL, SPLRES, COMP>(b: &'a [u8], lspl: SPL, comp: COMP) -> u32
+    pub fn process_buf_generic<'a, LINES, COMP>(mut lines: LINES, comp: COMP) -> u32
     where
-        COMP: Fn(&'a [u8]) -> u64,
-        SPL: Fn(&'a [u8]) -> SPLRES,
-        SPLRES: Iterator<Item = &'a [u8]>,
+        COMP: Fn(&[u8]) -> u64,
+        LINES: Iterator<Item = &'a [u8]>,
     {
         let mut result = 0u32;
 
-        let mut it = lspl(b);
-
-        while let Some(el1) = it.next() {
-            let el2 = it.next().unwrap();
-            let el3 = it.next().unwrap();
+        while let Some(el1) = lines.next() {
+            let el2 = lines.next().unwrap();
+            let el3 = lines.next().unwrap();
 
             let intersection = comp(el1) & comp(el2) & comp(el3);
             result += intersection.trailing_zeros();
@@ -178,18 +174,26 @@ pub mod part2 {
 }
 
 pub mod s1 {
-    use crate::{compartment, lsplit, part1};
+    use crate::{compartment, lsplit, part1, part2};
 
     pub fn process_buf(b: &[u8]) -> u32 {
-        part1::process_buf_generic(b, lsplit::l1, compartment::c1)
+        part1::process_buf_generic(lsplit::l1(b), compartment::c1)
+    }
+
+    pub fn process_buf_part_2(b: &[u8]) -> u32 {
+        part2::process_buf_generic(lsplit::l1(b), compartment::c1)
     }
 }
 
 pub mod s2 {
-    use crate::{compartment, lsplit, part1};
+    use crate::{compartment, lsplit, part1, part2};
 
     pub fn process_buf(b: &[u8]) -> u32 {
-        part1::process_buf_generic(b, lsplit::l1, compartment::c2)
+        part1::process_buf_generic(lsplit::l1(b), compartment::c2)
+    }
+
+    pub fn process_buf_part_2(b: &[u8]) -> u32 {
+        part2::process_buf_generic(lsplit::l1(b), compartment::c2)
     }
 }
 
@@ -197,10 +201,10 @@ pub mod s3 {
     use crate::{compartment, part1, part2, MemchrSplit};
 
     pub fn process_buf(b: &[u8]) -> u32 {
-        part1::process_buf_generic(b, |b| MemchrSplit::new(b, b'\n'), compartment::c3)
+        part1::process_buf_generic(MemchrSplit::new(b, b'\n'), compartment::c3)
     }
 
     pub fn process_buf_part_2(b: &[u8]) -> u32 {
-        part2::process_buf_generic(b, |b| MemchrSplit::new(b, b'\n'), compartment::c3)
+        part2::process_buf_generic(MemchrSplit::new(b, b'\n'), compartment::c3)
     }
 }
