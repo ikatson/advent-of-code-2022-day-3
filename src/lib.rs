@@ -54,9 +54,13 @@ pub mod s2 {
     fn compartment(c: &[u8]) -> u64 {
         let mut result = 0u64;
         for byte in c {
+            // Note lowercase always starts with 11, and uppercase always with 10.
+            // This way we can distinguish them with bitwise ops.
+            //
             // 'a'..'z' == 0b110_0001..0b111_1010
             // 'A'..'Z' == 0b100_0001..0b101_1010
             let byte = *byte;
+            // This uses the fact that "a" is 1 if only the last 5 bits are taken.
             let value = byte & 0b1_1111;
             // if uppercase, add 26 to the value
             // 0b11 - 0b11 == 0 (lowercase prefix)
