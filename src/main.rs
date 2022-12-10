@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use ad3p2::process_buf;
+use ad3p2::s1::process_buf;
 
 fn main() -> anyhow::Result<()> {
     let filename = std::env::args()
