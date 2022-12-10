@@ -135,7 +135,14 @@ pub mod s3 {
         let mut result = 0u32;
         let mut prev = 0;
         for pos in memchr::memchr_iter(b'\n', b) {
-            result += process_line(unsafe { b.get_unchecked(prev..pos) });
+            let line = unsafe { b.get_unchecked(prev..pos) };
+            let lresult = process_line(line);
+            println!(
+                "{} = {}",
+                unsafe { std::str::from_utf8_unchecked(line) },
+                lresult
+            );
+            result += lresult;
             prev = pos + 1
         }
         result
