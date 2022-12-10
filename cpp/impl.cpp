@@ -71,4 +71,26 @@ namespace ad3p2
         }
         return result;
     }
+
+    std::uint32_t processBuffer_part2(const std::vector<char> &buf)
+    {
+        auto result = 0;
+        size_t l1_start = 0;
+        while (const auto l1_len_opt = memchrVec(buf, '\n', l1_start))
+        {
+            auto l1_len = l1_len_opt.value();
+            auto l2_start = l1_start + l1_len + 1;
+            auto l2_len = memchrVec(buf, '\n', l2_start).value();
+            auto l3_start = l2_start + l2_len + 1;
+            auto l3_len = memchrVec(buf, '\n', l3_start).value();
+
+            auto l1 = compartment(buf.data() + l1_start, l1_len);
+            auto l2 = compartment(buf.data() + l2_start, l2_len);
+            auto l3 = compartment(buf.data() + l3_start, l3_len);
+
+            result += trailingZeros(l1 & l2 & l3);
+            l1_start = l3_start + l3_len + 1;
+        }
+        return result;
+    }
 }
