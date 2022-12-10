@@ -10,13 +10,7 @@ namespace
 
     std::uint32_t trailingZeros(std::uint64_t v)
     {
-        std::uint32_t result = 0;
-        while ((v & 1) == 0)
-        {
-            result += 1;
-            v = v >> 1;
-        }
-        return result;
+        return __builtin_ctzl(v);
     }
 
     std::optional<size_t> memchrVec(const std::vector<char> &haystack, char needle, size_t offset)
@@ -49,7 +43,6 @@ namespace
             {
                 priority = byte - 'A' + 27;
             }
-            assert(priority > 0);
             result |= ONE << priority;
         }
         return result;
@@ -69,10 +62,6 @@ namespace ad3p2
 {
     std::uint32_t processBuffer(const std::vector<char> &buf)
     {
-        assert(compartment("a", 1) == 0b10);
-        assert(compartment("d", 1) == 0b10000);
-        assert(compartment("A", 1) == 1 << 27);
-
         auto result = 0;
         size_t offset = 0;
         while (const auto newLinePos = memchrVec(buf, '\n', offset))
