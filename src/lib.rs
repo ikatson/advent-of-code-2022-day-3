@@ -75,7 +75,7 @@ pub mod lsplit {
     use crate::MemchrSplit;
 
     pub fn l1(b: &[u8]) -> impl Iterator<Item = &[u8]> {
-        b.split(|c| *c == b'\n')
+        b.split(|c| *c == b'\n').filter(|l| !l.is_empty())
     }
 
     pub fn l2(b: &[u8]) -> impl Iterator<Item = &[u8]> {
@@ -85,9 +85,6 @@ pub mod lsplit {
 
 pub mod part1 {
     pub fn line(l: &[u8], compartment: impl Fn(&[u8]) -> u64) -> u32 {
-        if l.is_empty() {
-            return 0;
-        }
         let half = l.len() / 2;
         let left = &l[..half];
         let right = &l[half..];
