@@ -1,7 +1,29 @@
-pub mod s1 {
+struct MemchrSplit<'a> {
+    buf: &'a [u8],
+    needle: u8,
+}
+
+impl<'a> MemchrSplit<'a> {
+    pub fn new(buf: &'a [u8], needle: u8) -> Self {
+        Self { buf, needle }
+    }
+}
+
+impl<'a> Iterator for MemchrSplit<'a> {
+    type Item = &'a [u8];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let offset = memchr::memchr(self.needle, self.buf)?;
+        let ret = unsafe { self.buf.get_unchecked(..offset) };
+        self.buf = &self.buf[offset + 1..];
+        Some(ret)
+    }
+}
+
+pub mod compartment {
     use std::hint::unreachable_unchecked;
 
-    fn compartment(c: &[u8]) -> u64 {
+    pub fn c1(c: &[u8]) -> u64 {
         let mut result = 0u64;
         for byte in c {
             let bit = match *byte {
@@ -14,44 +36,8 @@ pub mod s1 {
         result
     }
 
-    pub fn process_line(l: &[u8]) -> u32 {
-        if l.is_empty() {
-            return 0;
-        }
-        let half = l.len() / 2;
-        let left = &l[..half];
-        let right = &l[half..];
-
-        let left_c = compartment(left);
-        let right_c = compartment(right);
-
-        let intersection = left_c & right_c;
-        intersection.trailing_zeros()
-    }
-
-    pub fn process_buf(b: &[u8]) -> u32 {
-        b.split(|c| *c == b'\n').map(process_line).sum()
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::process_line;
-
-        #[test]
-        fn t1() {
-            assert_eq!(process_line(b"fBDGBcBrGDvjPtPtPV"), 30);
-        }
-
-        #[test]
-        fn t2() {
-            assert_eq!(process_line(b"ttgJtRGJQctTZtZT"), (b't' - b'a') as u32 + 1);
-        }
-    }
-}
-
-pub mod s2 {
     // This one auto-vectorizes, but it's somehow detrimental at least on m1.
-    fn compartment(c: &[u8]) -> u64 {
+    pub fn c2(c: &[u8]) -> u64 {
         let mut result = 0u64;
         for byte in c {
             // Note lowercase always starts with 11, and uppercase always with 10.
@@ -71,7 +57,34 @@ pub mod s2 {
         result
     }
 
-    pub fn process_line(l: &[u8]) -> u32 {
+    pub fn c3(c: &[u8]) -> u64 {
+        let mut result = 0u64;
+        for byte in c.iter().copied() {
+            let bit = if byte >= b'a' {
+                byte - b'a' + 1
+            } else {
+                byte - b'A' + 27
+            };
+            result |= 1 << bit;
+        }
+        result
+    }
+}
+
+pub mod lsplit {
+    use crate::MemchrSplit;
+
+    pub fn l1(b: &[u8]) -> impl Iterator<Item = &[u8]> {
+        b.split(|c| *c == b'\n')
+    }
+
+    pub fn l2(b: &[u8]) -> impl Iterator<Item = &[u8]> {
+        MemchrSplit::new(b, b'\n')
+    }
+}
+
+pub mod part1 {
+    pub fn line<'a>(l: &'a [u8], compartment: impl Fn(&'a [u8]) -> u64) -> u32 {
         if l.is_empty() {
             return 0;
         }
@@ -86,97 +99,108 @@ pub mod s2 {
         intersection.trailing_zeros()
     }
 
-    pub fn process_buf(b: &[u8]) -> u32 {
-        b.split(|c| *c == b'\n').map(process_line).sum()
+    pub fn process_buf_generic<'a, SPL, SPLRES, COMP>(b: &'a [u8], lspl: SPL, comp: COMP) -> u32
+    where
+        COMP: Fn(&'a [u8]) -> u64 + Copy,
+        SPL: Fn(&'a [u8]) -> SPLRES,
+        SPLRES: Iterator<Item = &'a [u8]>,
+    {
+        lspl(b).map(|b| line(b, comp)).sum()
     }
 
     #[cfg(test)]
     mod tests {
-        use super::process_line;
+        use crate::compartment;
+
+        use super::line;
 
         #[test]
-        fn t1() {
-            assert_eq!(process_line(b"fBDGBcBrGDvjPtPtPV"), 30);
+        fn t1_c1() {
+            assert_eq!(line(b"fBDGBcBrGDvjPtPtPV", compartment::c1), 30);
         }
 
         #[test]
-        fn t2() {
-            assert_eq!(process_line(b"ttgJtRGJQctTZtZT"), (b't' - b'a') as u32 + 1);
+        fn t2_c1() {
+            assert_eq!(
+                line(b"ttgJtRGJQctTZtZT", compartment::c1),
+                (b't' - b'a') as u32 + 1
+            );
+        }
+
+        #[test]
+        fn t1_c2() {
+            assert_eq!(line(b"fBDGBcBrGDvjPtPtPV", compartment::c2), 30);
+        }
+
+        #[test]
+        fn t2_c2() {
+            assert_eq!(
+                line(b"ttgJtRGJQctTZtZT", compartment::c2),
+                (b't' - b'a') as u32 + 1
+            );
+        }
+
+        #[test]
+        fn t1_c3() {
+            assert_eq!(line(b"fBDGBcBrGDvjPtPtPV", compartment::c3), 30);
+        }
+
+        #[test]
+        fn t2_c3() {
+            assert_eq!(
+                line(b"ttgJtRGJQctTZtZT", compartment::c3),
+                (b't' - b'a') as u32 + 1
+            );
         }
     }
 }
 
-pub mod s3 {
-    fn compartment(c: &[u8]) -> u64 {
-        let mut result = 0u64;
-        for byte in c.iter().copied() {
-            let bit = if byte >= b'a' {
-                byte - b'a' + 1
-            } else {
-                byte - b'A' + 27
-            };
-            result |= 1 << bit;
+pub mod part2 {
+    pub fn process_buf_generic<'a, SPL, SPLRES, COMP>(b: &'a [u8], lspl: SPL, comp: COMP) -> u32
+    where
+        COMP: Fn(&'a [u8]) -> u64,
+        SPL: Fn(&'a [u8]) -> SPLRES,
+        SPLRES: Iterator<Item = &'a [u8]>,
+    {
+        let mut result = 0u32;
+
+        let mut it = lspl(b);
+
+        while let Some(el1) = it.next() {
+            let el2 = it.next().unwrap();
+            let el3 = it.next().unwrap();
+
+            let intersection = comp(el1) & comp(el2) & comp(el3);
+            result += intersection.trailing_zeros();
         }
         result
     }
+}
 
-    pub fn process_line(l: &[u8]) -> u32 {
-        let half = l.len() / 2;
-        let left = &l[..half];
-        let right = &l[half..];
-
-        let left_c = compartment(left);
-        let right_c = compartment(right);
-
-        let intersection = left_c & right_c;
-        intersection.trailing_zeros()
-    }
+pub mod s1 {
+    use crate::{compartment, lsplit, part1};
 
     pub fn process_buf(b: &[u8]) -> u32 {
-        let mut result = 0u32;
-        let mut prev = 0;
-        for pos in memchr::memchr_iter(b'\n', b) {
-            let line = &b[prev..pos];
-            let lresult = process_line(line);
-            result += lresult;
-            prev = pos + 1
-        }
-        result
+        part1::process_buf_generic(b, lsplit::l1, compartment::c1)
+    }
+}
+
+pub mod s2 {
+    use crate::{compartment, lsplit, part1};
+
+    pub fn process_buf(b: &[u8]) -> u32 {
+        part1::process_buf_generic(b, lsplit::l1, compartment::c2)
+    }
+}
+
+pub mod s3 {
+    use crate::{compartment, part1, part2, MemchrSplit};
+
+    pub fn process_buf(b: &[u8]) -> u32 {
+        part1::process_buf_generic(b, |b| MemchrSplit::new(b, b'\n'), compartment::c3)
     }
 
     pub fn process_buf_part_2(b: &[u8]) -> u32 {
-        let mut result = 0u32;
-        let mut prev = 0;
-
-        let mut it = memchr::memchr_iter(b'\n', b);
-
-        while let Some(el1_end) = it.next() {
-            let el2_end = it.next().unwrap();
-            let el3_end = it.next().unwrap();
-
-            let el1_s = b.get(prev..el1_end).unwrap();
-            let el2_s = b.get(el1_end + 1..el2_end).unwrap();
-            let el3_s = b.get(el2_end + 1..el3_end).unwrap();
-
-            let intersection = compartment(el1_s) & compartment(el2_s) & compartment(el3_s);
-            result += intersection.trailing_zeros();
-            prev = el3_end + 1;
-        }
-        result
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::process_line;
-
-        #[test]
-        fn t1() {
-            assert_eq!(process_line(b"fBDGBcBrGDvjPtPtPV"), 30);
-        }
-
-        #[test]
-        fn t2() {
-            assert_eq!(process_line(b"ttgJtRGJQctTZtZT"), (b't' - b'a') as u32 + 1);
-        }
+        part2::process_buf_generic(b, |b| MemchrSplit::new(b, b'\n'), compartment::c3)
     }
 }
