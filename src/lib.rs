@@ -136,7 +136,7 @@ pub mod s3 {
         let mut result = 0u32;
         let mut prev = 0;
         for pos in memchr::memchr_iter(b'\n', b) {
-            let line = unsafe { b.get_unchecked(prev..pos) };
+            let line = &b[prev..pos];
             let lresult = process_line(line);
             result += lresult;
             prev = pos + 1
@@ -154,9 +154,9 @@ pub mod s3 {
             let el2_end = it.next().unwrap();
             let el3_end = it.next().unwrap();
 
-            let el1_s = unsafe { b.get_unchecked(prev..el1_end) };
-            let el2_s = unsafe { b.get_unchecked(el1_end + 1..el2_end) };
-            let el3_s = unsafe { b.get_unchecked(el2_end + 1..el3_end) };
+            let el1_s = b.get(prev..el1_end).unwrap();
+            let el2_s = b.get(el1_end + 1..el2_end).unwrap();
+            let el3_s = b.get(el2_end + 1..el3_end).unwrap();
 
             let intersection = compartment(el1_s) & compartment(el2_s) & compartment(el3_s);
             result += intersection.trailing_zeros();
