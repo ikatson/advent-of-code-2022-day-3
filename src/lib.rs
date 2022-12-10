@@ -195,13 +195,13 @@ pub mod s2 {
 }
 
 pub mod s3 {
-    use crate::{compartment, part1, part2, MemchrSplit};
+    use crate::{compartment, lsplit, part1, part2};
 
     pub fn process_buf(b: &[u8]) -> u32 {
-        part1::process_buf_generic(MemchrSplit::new(b, b'\n'), compartment::c3)
+        part1::process_buf_generic(lsplit::l2(b), compartment::c3)
     }
 
     pub fn process_buf_part_2(b: &[u8]) -> u32 {
-        part2::process_buf_generic(MemchrSplit::new(b, b'\n'), compartment::c3)
+        part2::process_buf_generic(lsplit::l2(b), compartment::c3)
     }
 }
