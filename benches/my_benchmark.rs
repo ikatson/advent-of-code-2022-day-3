@@ -16,6 +16,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("process_buf::s3", |b| {
         b.iter(|| s3::process_buf(black_box(s.as_bytes())))
     });
+    c.bench_function("process_buf::s3_part2", |b| {
+        b.iter(|| s3::process_buf_part_2(black_box(s.as_bytes())))
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

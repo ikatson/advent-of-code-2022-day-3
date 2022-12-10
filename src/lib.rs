@@ -103,15 +103,12 @@ pub mod s2 {
 }
 
 pub mod s3 {
-    use std::hint::unreachable_unchecked;
-
     fn compartment(c: &[u8]) -> u64 {
         let mut result = 0u64;
-        for byte in c {
-            let bit = match *byte {
-                b'a'..=b'z' => *byte - b'a' + 1,
-                b'A'..=b'Z' => *byte - b'A' + 27,
-                _ => unsafe { unreachable_unchecked() },
+        for byte in c.iter().copied() {
+            let bit = match byte {
+                b'a'..=b'z' => byte - b'a' + 1,
+                _ => byte - b'A' + 27,
             };
             result |= 1 << bit;
         }
@@ -130,15 +127,33 @@ pub mod s3 {
         intersection.trailing_zeros()
     }
 
-    pub fn process_buf(mut b: &[u8]) -> u32 {
+    pub fn process_buf(b: &[u8]) -> u32 {
         let mut result = 0u32;
-        while !b.is_empty() {
-            let end = memchr::memchr(b'\n', b).unwrap_or(b.len());
-            result += process_line(&b[..end]);
-            match b.get(end + 1..) {
-                Some(p) => b = p,
-                None => break,
-            }
+        let mut prev = 0;
+        for pos in memchr::memchr_iter(b'\n', b) {
+            result += process_line(unsafe { b.get_unchecked(prev..pos) });
+            prev = pos + 1
+        }
+        result
+    }
+
+    pub fn process_buf_part_2(b: &[u8]) -> u32 {
+        let mut result = 0u32;
+        let mut prev = 0;
+
+        let mut it = memchr::memchr_iter(b'\n', b);
+
+        while let Some(el1_end) = it.next() {
+            let el2_end = it.next().unwrap();
+            let el3_end = it.next().unwrap();
+
+            let el1_s = unsafe { b.get_unchecked(prev..el1_end) };
+            let el2_s = unsafe { b.get_unchecked(el1_end + 1..el2_end) };
+            let el3_s = unsafe { b.get_unchecked(el2_end + 1..el3_end) };
+
+            let intersection = compartment(el1_s) & compartment(el2_s) & compartment(el3_s);
+            result += intersection.trailing_zeros();
+            prev = el3_end + 1;
         }
         result
     }
