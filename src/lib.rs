@@ -1,3 +1,12 @@
+fn memchr_libc(needle: u8, buf: &[u8]) -> Option<usize> {
+    let out = unsafe { libc::memchr(buf.as_ptr() as _, needle as _, buf.len()) };
+    if out.is_null() {
+        return None;
+    }
+    let out = out as *const u8;
+    Some(unsafe { out.offset_from(buf.as_ptr()) } as usize)
+}
+
 struct MemchrSplit<'a> {
     buf: &'a [u8],
     needle: u8,
@@ -13,7 +22,7 @@ impl<'a> Iterator for MemchrSplit<'a> {
     type Item = &'a [u8];
 
     fn next(&mut self) -> Option<Self::Item> {
-        let offset = memchr::memchr(self.needle, self.buf)?;
+        let offset = memchr_libc(self.needle, self.buf)?;
         let ret = unsafe { self.buf.get_unchecked(..offset) };
         self.buf = &self.buf[offset + 1..];
         Some(ret)
