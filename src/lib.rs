@@ -1,3 +1,5 @@
+#![no_std]
+
 struct MemchrSplit<'a> {
     buf: &'a [u8],
     needle: u8,
@@ -21,7 +23,7 @@ impl<'a> Iterator for MemchrSplit<'a> {
 }
 
 pub mod compartment {
-    use std::hint::unreachable_unchecked;
+    use core::hint::unreachable_unchecked;
 
     pub fn c1(c: &[u8]) -> u64 {
         let mut result = 0u64;

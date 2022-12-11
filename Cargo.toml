@@ -5,9 +5,14 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.release]
+panic = 'abort'
+lto = true
+codegen-units = 1
+
 [dependencies]
-anyhow = "1.0.66"
-memchr = "2.5.0"
+memchr = {version = "2.5.0", default-features = false, features = []}
+libc = { version = "0.2", default-features = false }
 
 [dev-dependencies]
 criterion = "0.4"
