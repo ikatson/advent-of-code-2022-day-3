@@ -3,7 +3,7 @@
 #![feature(lang_items)]
 #![feature(panic_info_message)]
 
-use core::fmt::Write;
+use core::{ffi::CStr, fmt::Write};
 
 use ad3p2::{s1, s2, s3};
 
@@ -12,13 +12,14 @@ extern "C" fn eh_personality() {}
 
 #[panic_handler]
 fn my_panic(info: &core::panic::PanicInfo) -> ! {
-    match info.message() {
-        Some(msg) => {
-            writeln!(FdWriter::stderr(), "{msg}");
-        }
-        None => {}
+    if let Some(msg) = info.message() {
+        if writeln!(FdWriter::stderr(), "{msg}").is_ok() {}
     }
     unsafe { libc::exit(1) }
+}
+
+fn map_args(argc: i32, argv: *const *const u8) -> impl Iterator<Item = &'static CStr> {
+    (0..argc).map(move |offset| unsafe { CStr::from_ptr(*argv.offset(offset as isize) as _) })
 }
 
 struct FdWriter {
@@ -47,19 +48,25 @@ fn print_c_error_and_panic(m: &'static str) {
     panic!("");
 }
 
-unsafe fn make_stat() -> libc::stat {
-    let stat: core::mem::MaybeUninit<libc::stat> = core::mem::MaybeUninit::uninit();
+unsafe fn stat(fd: i32) -> libc::stat {
+    let mut stat: core::mem::MaybeUninit<libc::stat> = core::mem::MaybeUninit::uninit();
+    let res = libc::fstat(fd, stat.as_mut_ptr());
+    if res == -1 {
+        print_c_error_and_panic("can't stat file");
+    }
     stat.assume_init()
 }
 
-unsafe fn mmap_file<'a>(name: *const u8) -> &'a [u8] {
-    let fd = libc::open(name as _, libc::O_RDONLY);
+unsafe fn mmap_file<'a>(name: &'static CStr) -> &'a [u8] {
+    let fd = libc::open(name.as_ptr(), libc::O_RDONLY);
     if fd == -1 {
         print_c_error_and_panic("error opening file");
     }
-    let mut st = make_stat();
-    libc::fstat(fd, &mut st);
-    let size = st.st_size;
+    let stat = stat(fd);
+    if stat.st_mode & libc::S_IFREG != libc::S_IFREG {
+        panic!("not a regular file");
+    }
+    let size = stat.st_size;
     let mm = libc::mmap(
         core::ptr::null_mut(),
         size as usize,
@@ -68,14 +75,16 @@ unsafe fn mmap_file<'a>(name: *const u8) -> &'a [u8] {
         fd,
         0,
     );
+    if mm.is_null() {
+        print_c_error_and_panic("error calling mmap")
+    }
     core::slice::from_raw_parts(mm as _, size as usize)
 }
 
-fn get_filename_from_args(argc: i32, argv: *const *const u8) -> *const u8 {
-    if argc < 2 {
-        panic!("You should provide an argument");
-    }
-    unsafe { *argv.offset(1) as _ }
+fn get_filename_from_args(argc: i32, argv: *const *const u8) -> &'static CStr {
+    map_args(argc, argv)
+        .nth(1)
+        .expect("the first argument should be a string")
 }
 
 #[no_mangle]
