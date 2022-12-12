@@ -5,7 +5,7 @@
 
 use core::{ffi::CStr, fmt::Write};
 
-use ad3p2::{s1, s2, s3};
+use ad3p2::s3;
 
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
