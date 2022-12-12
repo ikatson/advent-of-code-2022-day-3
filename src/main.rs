@@ -2,7 +2,7 @@ use std::io::Read;
 
 use ad3p2::{s1, s2, s3};
 
-fn main() -> anyhow::Result<()> {
+fn main() {
     let filename = std::env::args()
         .nth(1)
         .expect("first arg should be filename");
@@ -19,5 +19,4 @@ fn main() -> anyhow::Result<()> {
     println!("s2 part 2: {}", s2::process_buf_part_2(s));
     println!("s3: {}", s3::process_buf(s));
     println!("s3 part2: {}", s3::process_buf_part_2(s));
-    Ok(())
 }
