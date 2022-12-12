@@ -11,11 +11,13 @@ fn main() -> anyhow::Result<()> {
     let mut s = String::new();
     f.read_to_string(&mut s)?;
 
-    println!("s1: {}", s1::process_buf(s.as_bytes()));
-    println!("s1 part 2: {}", s1::process_buf_part_2(s.as_bytes()));
-    println!("s2: {}", s2::process_buf(s.as_bytes()));
-    println!("s2 part 2: {}", s2::process_buf_part_2(s.as_bytes()));
-    println!("s3: {}", s3::process_buf(s.as_bytes()));
-    println!("s3 part2: {}", s3::process_buf_part_2(s.as_bytes()));
+    let s = s.as_bytes();
+
+    println!("s1: {}", s1::process_buf(s));
+    println!("s1 part 2: {}", s1::process_buf_part_2(s));
+    println!("s2: {}", s2::process_buf(s));
+    println!("s2 part 2: {}", s2::process_buf_part_2(s));
+    println!("s3: {}", s3::process_buf(s));
+    println!("s3 part2: {}", s3::process_buf_part_2(s));
     Ok(())
 }

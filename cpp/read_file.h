@@ -3,5 +3,5 @@
 
 namespace ad3p2
 {
-    std::vector<char> readFile(std::string_view name);
+    std::string readFile(std::string_view name);
 }

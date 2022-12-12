@@ -9,7 +9,7 @@ run: build/main
 benchmark: build/benchmark
 	build/benchmark
 
-build/main: Makefile build/obj/read_file.o build/obj/impl.o
+build/main: Makefile build/obj/read_file.o build/obj/impl.o main.cpp
 	$(CC) $(CC_OPTS) build/obj/read_file.o build/obj/impl.o main.cpp -o $@
 
 build/obj/impl.o: Makefile impl.h impl.cpp

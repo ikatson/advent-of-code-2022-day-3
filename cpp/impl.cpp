@@ -13,7 +13,7 @@ namespace
         return __builtin_ctzl(v);
     }
 
-    std::optional<size_t> memchrVec(const std::vector<char> &haystack, char needle, size_t offset)
+    std::optional<size_t> memchrVec(std::string_view haystack, char needle, size_t offset)
     {
         // if (offset >= haystack.size())
         // {
@@ -60,7 +60,7 @@ namespace
 
 namespace ad3p2
 {
-    std::uint32_t processBuffer(const std::vector<char> &buf)
+    std::uint32_t processBuffer(std::string_view buf)
     {
         auto result = 0;
         size_t offset = 0;
@@ -72,7 +72,7 @@ namespace ad3p2
         return result;
     }
 
-    std::uint32_t processBuffer_part2(const std::vector<char> &buf)
+    std::uint32_t processBuffer_part2(std::string_view buf)
     {
         auto result = 0;
         size_t l1_start = 0;
