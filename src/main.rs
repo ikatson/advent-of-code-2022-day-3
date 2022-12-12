@@ -7,9 +7,9 @@ fn main() {
         .nth(1)
         .expect("first arg should be filename");
 
-    let mut f = std::fs::File::open(filename)?;
+    let mut f = std::fs::File::open(filename).expect("can't open file");
     let mut s = String::new();
-    f.read_to_string(&mut s)?;
+    f.read_to_string(&mut s).expect("can't read file");
 
     let s = s.as_bytes();
 
